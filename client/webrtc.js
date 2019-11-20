@@ -3,6 +3,11 @@ console.log('webrtc.js loaded')
 var peerConnection
 var uuid
 var serverConnection
+var sendChannel
+const container = document.getElementById('container')
+const canvas = document.getElementById('canvas')
+canvas.width = 300
+canvas.height = 300
 
 var peerConnectionConfig = {
   'iceServers': [
@@ -35,7 +40,7 @@ function start (isCaller) {
       .catch(errorHandler)
 
     setInterval(() => {
-      sendChannel.send('test')
+      sendChannel.send(JSON.stringify({ 'test': 'hi' }))
     }, 1000)
   } else {
     peerConnection.ondatachannel = receiveChannelCallback
@@ -57,8 +62,8 @@ function receiveChannelCallback (event) {
   }
   receiveChannel.onmessage = (data) => {
     console.log('data', data)
-		container.innerHTML += data.data
-		receiveChannel.send('test back')
+    container.innerHTML += data.data
+    receiveChannel.send('test back')
   }
 }
 
@@ -72,7 +77,7 @@ function gotMessageFromServer (message) {
 
   var signal = JSON.parse(message.data)
 
-  if (signal.uuid == uuid) return
+  if (signal.uuid === uuid) return
 
   //! !! IDK
   // Only two messages are sent through the signalling server:
@@ -84,8 +89,8 @@ function gotMessageFromServer (message) {
     peerConnection.setRemoteDescription(signal.sdp)
       .then(() => {
         // So if peer is OFFERing then we should ANSWER it
-        if (signal.sdp.type == 'offer') {
-          peerConnection.createAnswer()	//
+        if (signal.sdp.type === 'offer') {
+          peerConnection.createAnswer() //
             .then(createDescription)
             .catch(errorHandler)
         }
@@ -121,11 +126,6 @@ function gotIceCandidate (event) {
     // I THINK. So event.candidate is from the stun server, and you're sending that to the other dude
     serverConnection.send(JSON.stringify({ 'ice': event.candidate, 'uuid': uuid }))
   }
-}
-
-function gotRemoteStream (event) {
-  console.log('got remote stream')
-  remoteVideo.srcObject = event.streams[0]
 }
 
 function errorHandler (error) {

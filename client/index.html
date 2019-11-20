@@ -5,17 +5,19 @@
 		<meta charset="UTF-8" />
 		<!--     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
  -->
-		<script src="webrtc.js"></script>
-
+ 		<link type="text/css" href="main.css" rel="stylesheet" />
 	</head>
 
 	<body>
 		<div id="container"></div>
 		
-		<br/>
-		<input type="button" id="start" onclick="start(true)" value="start video">
-		<h1>testing</h1>
+		<input type="button" id="start" onclick="start(true)" value="Create WebRTC Connection">
 
+		<br/>
+		<canvas id="canvas"></canvas>
+
+
+		<script src="webrtc.js"></script>
 		<script>
 			pageReady()
 		</script>
