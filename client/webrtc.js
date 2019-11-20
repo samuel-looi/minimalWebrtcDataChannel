@@ -1,8 +1,5 @@
 console.log('webrtc.js loaded')
 
-var localVideo
-var localStream
-var remoteVideo
 var peerConnection
 var uuid
 var serverConnection
@@ -17,9 +14,6 @@ var peerConnectionConfig = {
 function pageReady () {
   uuid = createUUID()
 
-  localVideo = document.getElementById('localVideo')
-  remoteVideo = document.getElementById('remoteVideo')
-
   serverConnection = new WebSocket('wss://' + window.location.host)
   serverConnection.onmessage = gotMessageFromServer
 }
@@ -31,32 +25,41 @@ function start (isCaller) {
   // peerConnection.addStream(localStream)
 
   if (isCaller) {
-		
-		sendChannel = peerConnection.createDataChannel('sendDataChannel')
-		sendChannel.onopen = handleSendChannelStatusChange
-		sendChannel.onclose = handleSendChannelStatusChange
+    sendChannel = peerConnection.createDataChannel('sendDataChannel')
+    sendChannel.onopen = handleSendChannelStatusChange
+    sendChannel.onclose = handleSendChannelStatusChange
+    sendChannel.onmessage = testing
 
     peerConnection.createOffer()
       .then(createDescription)
-			.catch(errorHandler)
-			
-		setInterval(()=>{
-			sendChannel.send('test')
-		},1000)
+      .catch(errorHandler)
+
+    setInterval(() => {
+      sendChannel.send('test')
+    }, 1000)
   } else {
-		peerConnection.ondatachannel = receiveChannelCallback
+    peerConnection.ondatachannel = receiveChannelCallback
   }
+}
+
+function testing (data) {
+  console.log('testing', data)
 }
 
 function handleSendChannelStatusChange () {
   console.log('sendChannel.readyState', sendChannel.readyState)
 }
 
-function receiveChannelCallback(event){
-	const receiveChannel = event.channel
-	receiveChannel.onopen = () => {
-		console.log('IT FUCKING WORKS!!@#!#!@#!@#!#!@#!@#')
-	}
+function receiveChannelCallback (event) {
+  const receiveChannel = event.channel
+  receiveChannel.onopen = () => {
+    console.log('IT FUCKING WORKS!!@#!#!@#!@#!#!@#!@#')
+  }
+  receiveChannel.onmessage = (data) => {
+    console.log('data', data)
+		container.innerHTML += data.data
+		receiveChannel.send('test back')
+  }
 }
 
 // message contains:
