@@ -1,20 +1,65 @@
 console.log('webrtc.js loaded')
+// WEBRTC CONNECTION
 
 var peerConnection
 var uuid
 var serverConnection
 var sendChannel
 const container = document.getElementById('container')
-const canvas = document.getElementById('canvas')
-canvas.width = 300
-canvas.height = 300
-
 var peerConnectionConfig = {
   'iceServers': [
     { 'urls': 'stun:stun.stunprotocol.org:3478' },
     { 'urls': 'stun:stun.l.google.com:19302' }
   ]
 }
+var isHost = false
+
+// GAME VARIABLES
+
+const spawn = {
+  x: 10,
+  y: 10
+}
+const player = {
+  accel: 1,
+  delY: 0,
+  delX: 0,
+  x: spawn.x,
+  xVel: 0,
+  y: spawn.y,
+  yVel: 0,
+  r: 10
+}
+var otherPlayer = {
+  x: spawn.x,
+  y: spawn.y
+}
+const keyPressed = {
+  w: false,
+  s: false,
+  a: false,
+  d: false
+}
+// CANVAS
+
+const canvas = document.createElement('canvas')// document.getElementById('canvasContainer')
+canvas.width = 300
+canvas.height = 300
+const fWidth = canvas.width
+const fHeight = canvas.height
+document.getElementById('canvasContainer').appendChild(canvas)
+const c = canvas.getContext('2d')
+
+const eAngle = 2 * 3.1416// Math.PI
+
+function drawCirlce (x, y, r) {
+  c.beginPath()
+  c.arc(x, y, r, 0, eAngle)
+  c.stroke()
+}
+// drawCirlce(50, 50, 10)
+
+// MAIN CODE
 
 function pageReady () {
   uuid = createUUID()
@@ -24,6 +69,7 @@ function pageReady () {
 }
 
 function start (isCaller) {
+  isHost = isCaller
   peerConnection = new RTCPeerConnection(peerConnectionConfig) // needs internet
   peerConnection.onicecandidate = gotIceCandidate
   // peerConnection.ontrack = gotRemoteStream
@@ -31,42 +77,98 @@ function start (isCaller) {
 
   if (isCaller) {
     sendChannel = peerConnection.createDataChannel('sendDataChannel')
-    sendChannel.onopen = handleSendChannelStatusChange
-    sendChannel.onclose = handleSendChannelStatusChange
-    sendChannel.onmessage = testing
+    sendChannel.onopen = sendChannelOnOpen
+    sendChannel.onclose = sendChannelOnClose
+    sendChannel.onmessage = hostOnMessage
 
     peerConnection.createOffer()
       .then(createDescription)
       .catch(errorHandler)
-
-    setInterval(() => {
-      sendChannel.send(JSON.stringify({ 'test': 'hi' }))
-    }, 1000)
   } else {
     peerConnection.ondatachannel = receiveChannelCallback
   }
 }
 
-function testing (data) {
-  console.log('testing', data)
+function hostOnMessage (event) {
+  // console.log('testing', event)
+
+  otherPlayer = JSON.parse(event.data)
 }
 
-function handleSendChannelStatusChange () {
+function sendChannelOnOpen () {
+  tick()
+  console.log('sendChannel.readyState', sendChannel.readyState)
+}
+
+function sendChannelOnClose () {
   console.log('sendChannel.readyState', sendChannel.readyState)
 }
 
 function receiveChannelCallback (event) {
   const receiveChannel = event.channel
   receiveChannel.onopen = () => {
-    console.log('IT FUCKING WORKS!!@#!#!@#!@#!#!@#!@#')
+    tick()
+    // console.log('IT FUCKING WORKS!!@#!#!@#!@#!#!@#!@#')
   }
-  receiveChannel.onmessage = (data) => {
-    console.log('data', data)
-    container.innerHTML += data.data
-    receiveChannel.send('test back')
+  receiveChannel.onmessage = (event) => {
+    // console.log('event', event)
+    container.innerHTML = event.data
+
+    otherPlayer = JSON.parse(event.data)
+    // console.log('adslkasdjklasjd')
+    receiveChannel.send(JSON.stringify({ x: player.x, y: player.y }))
   }
 }
 
+document.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase()
+  // console.log(key)
+  keyPressed[key] = true
+  // console.log('keyPressed', keyPressed)
+})
+document.addEventListener('keyup', (e) => {
+  const key = e.key.toLowerCase()
+  // console.log(key)
+  keyPressed[key] = false
+  // console.log('keyPressed', keyPressed)
+})
+
+function tick () {
+  updatePlayerPos()
+  render()
+
+  if (isHost) {
+    sendChannel.send(JSON.stringify({ x: player.x, y: player.y }))
+  } else {
+
+  }
+
+  requestAnimationFrame(tick)
+}
+
+function updatePlayerPos () {
+  player.yVel *= 0.9
+  player.xVel *= 0.9
+  if (keyPressed.w) {
+    if (Math.abs(player.yVel) < 2) { player.yVel -= player.accel }
+  } else if (keyPressed.s) {
+    if (Math.abs(player.yVel) < 2) { player.yVel += player.accel }
+  }
+  if (keyPressed.a) {
+    if (Math.abs(player.xVel) < 2) { player.xVel -= player.accel }
+  } else if (keyPressed.d) {
+    if (Math.abs(player.xVel) < 2) { player.xVel += player.accel }
+  }
+  player.y += player.yVel
+  player.x += player.xVel
+}
+
+function render () {
+  c.clearRect(0, 0, fWidth, fHeight)
+  // console.log(player)
+  drawCirlce(player.x, player.y, player.r)
+  drawCirlce(otherPlayer.x, otherPlayer.y, player.r)
+}
 // message contains:
 /*
  uuid, sdp or ice
