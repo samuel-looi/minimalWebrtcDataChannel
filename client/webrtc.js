@@ -117,10 +117,10 @@ function receiveChannelCallback (event) {
   }
   receiveChannel.onmessage = (event) => {
     // console.log('event', event)
-    container.innerHTML = event.data
+    // container.innerHTML = event.data
 
     otherPlayer = JSON.parse(event.data)
-    console.log('otherplayer data', otherPlayer)
+    // console.log('otherplayer data', otherPlayer)
     // console.log('adslkasdjklasjd')
     receiveChannel.send(JSON.stringify({ x: player.x, y: player.y, dir: player.dir }))
   }
@@ -209,8 +209,8 @@ function render () {
   drawCircle(player.x, player.y, player.r)
   drawCircle(otherPlayer.x, otherPlayer.y, player.r)
   drawCircle(player.x + 10 * Math.cos(player.dir), player.y + 10 * Math.sin(player.dir), 2)
-  console.log('asdlkasdlkasjdlkajsd')
-  console.log('otherPlayer', otherPlayer)
+  // console.log('asdlkasdlkasjdlkajsd')
+  // console.log('otherPlayer', otherPlayer)
   drawCircle(otherPlayer.x + 10 * Math.cos(otherPlayer.dir), otherPlayer.y + 10 * Math.sin(otherPlayer.dir), 2)
 }
 // message contains:
