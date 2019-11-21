@@ -36,7 +36,8 @@ const player = {
 }
 var otherPlayer = {
   x: spawn.x,
-  y: spawn.y
+  y: spawn.y,
+  dir: 0
 }
 const keyPressed = {
   w: false,
@@ -119,8 +120,9 @@ function receiveChannelCallback (event) {
     container.innerHTML = event.data
 
     otherPlayer = JSON.parse(event.data)
+    console.log('otherplayer data', otherPlayer)
     // console.log('adslkasdjklasjd')
-    receiveChannel.send(JSON.stringify({ x: player.x, y: player.y }))
+    receiveChannel.send(JSON.stringify({ x: player.x, y: player.y, dir: player.dir }))
   }
 }
 
@@ -138,7 +140,7 @@ function tick () {
   updatePlayerPos()
 
   if (isHost) {
-    sendChannel.send(JSON.stringify({ x: player.x, y: player.y }))
+    sendChannel.send(JSON.stringify({ x: player.x, y: player.y, dir: player.dir }))
   } else {
 
   }
@@ -167,7 +169,6 @@ function updatePlayerPos () {
     player.dir += player.turnAccel
   }
 
-  drawCircle(player.x + 10 * Math.cos(player.dir), player.y + 10 * Math.sin(player.dir), 2)
   console.lg
   // if (keyPressed.a) {
   //   player.dir -= player.turnAccel
@@ -207,6 +208,10 @@ function render () {
   // console.log(player)
   drawCircle(player.x, player.y, player.r)
   drawCircle(otherPlayer.x, otherPlayer.y, player.r)
+  drawCircle(player.x + 10 * Math.cos(player.dir), player.y + 10 * Math.sin(player.dir), 2)
+  console.log('asdlkasdlkasjdlkajsd')
+  console.log('otherPlayer', otherPlayer)
+  drawCircle(otherPlayer.x + 10 * Math.cos(otherPlayer.dir), otherPlayer.y + 10 * Math.sin(otherPlayer.dir), 2)
 }
 // message contains:
 /*
