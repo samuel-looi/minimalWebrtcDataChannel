@@ -21,7 +21,11 @@ const spawn = {
   y: 10
 }
 const player = {
-  accel: 1,
+  accel: 0.2,
+  drag: 0.93,
+  turnAccel: 0.01 * 2 * Math.PI,
+  turnVel: 0,
+  dir: 0,
   delY: 0,
   delX: 0,
   x: spawn.x,
@@ -52,12 +56,12 @@ const c = canvas.getContext('2d')
 
 const eAngle = 2 * 3.1416// Math.PI
 
-function drawCirlce (x, y, r) {
+function drawCircle (x, y, r) {
   c.beginPath()
   c.arc(x, y, r, 0, eAngle)
   c.stroke()
 }
-// drawCirlce(50, 50, 10)
+// drawCircle(50, 50, 10)
 
 // MAIN CODE
 
@@ -122,20 +126,16 @@ function receiveChannelCallback (event) {
 
 document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase()
-  // console.log(key)
   keyPressed[key] = true
-  // console.log('keyPressed', keyPressed)
 })
 document.addEventListener('keyup', (e) => {
   const key = e.key.toLowerCase()
-  // console.log(key)
   keyPressed[key] = false
-  // console.log('keyPressed', keyPressed)
 })
 
 function tick () {
-  updatePlayerPos()
   render()
+  updatePlayerPos()
 
   if (isHost) {
     sendChannel.send(JSON.stringify({ x: player.x, y: player.y }))
@@ -147,27 +147,66 @@ function tick () {
 }
 
 function updatePlayerPos () {
-  player.yVel *= 0.9
-  player.xVel *= 0.9
+  player.yVel *= player.drag
+  player.xVel *= player.drag
+  // player.turnVel *= 0.9
+
+  // Increase vel in direction you're facing
   if (keyPressed.w) {
-    if (Math.abs(player.yVel) < 2) { player.yVel -= player.accel }
-  } else if (keyPressed.s) {
-    if (Math.abs(player.yVel) < 2) { player.yVel += player.accel }
+    player.xVel += player.accel * Math.cos(player.dir)
+    player.yVel += player.accel * Math.sin(player.dir)
+  }
+  if (keyPressed.s) {
+    player.xVel -= player.accel * Math.cos(player.dir)
+    player.yVel -= player.accel * Math.sin(player.dir)
   }
   if (keyPressed.a) {
-    if (Math.abs(player.xVel) < 2) { player.xVel -= player.accel }
-  } else if (keyPressed.d) {
-    if (Math.abs(player.xVel) < 2) { player.xVel += player.accel }
+    player.dir -= player.turnAccel
   }
+  if (keyPressed.d) {
+    player.dir += player.turnAccel
+  }
+
+  drawCircle(player.x + 10 * Math.cos(player.dir), player.y + 10 * Math.sin(player.dir), 2)
+  console.lg
+  // if (keyPressed.a) {
+  //   player.dir -= player.turnAccel
+  // }
+  // if (keyPressed.d) {
+  //   player.dir += player.turnAccel
+  // }
+
+  // Set cap on velocity
+  // if (Math.abs(player.yVel) > 2) {
+  //   player.yVel = Math.abs(player.yVel) / player.yVel * 2
+  // }
+  // if (Math.abs(player.xVel) > 2) {
+  //   player.xVel = Math.abs(player.xVel) / player.xVel * 2
+  // }
+  // if (Math.abs(player.turnVel) > 1 * 2 * Math.PI) {
+  //   player.turnVel = Math.abs(player.turnVel) / player.turnVel * Math.PI * 2
+  // }
+
+  // if (keyPressed.w) {
+  //   if (Math.abs(player.yVel) < 2) { player.yVel -= player.accel }
+  // } else if (keyPressed.s) {
+  //   if (Math.abs(player.yVel) < 2) { player.yVel += player.accel }
+  // }
+  // if (keyPressed.a) {
+  //   if (Math.abs(player.xVel) < 2) { player.xVel -= player.accel }
+  // } else if (keyPressed.d) {
+  //   if (Math.abs(player.xVel) < 2) { player.xVel += player.accel }
+  // }
   player.y += player.yVel
   player.x += player.xVel
+  player.dir += player.turnVel
 }
 
 function render () {
   c.clearRect(0, 0, fWidth, fHeight)
   // console.log(player)
-  drawCirlce(player.x, player.y, player.r)
-  drawCirlce(otherPlayer.x, otherPlayer.y, player.r)
+  drawCircle(player.x, player.y, player.r)
+  drawCircle(otherPlayer.x, otherPlayer.y, player.r)
 }
 // message contains:
 /*
